@@ -73,9 +73,7 @@ def task(strategy,params):
         score = show_performance_metrics(result.loc[datetime(2020,1,1):VALID_END_DATE],show = False)
         IS_score = show_performance_metrics(result.loc[datetime(2020,1,1):INSAMPLE_END_DATE],show = False)#['FitnessValue']
         OS_score = show_performance_metrics(result.loc[INSAMPLE_END_DATE:VALID_END_DATE],show = False)
-        # IS_score = show_performance_metrics(result.loc[INSAMPLE_END_DATE:VALID_END_DATE],show = False)
-        # OS_score = show_performance_metrics(result.loc[datetime(2020,1,1):SAMPLE_END_DATE],show = False)
-        # param = {'len1':param[0],'len2':param[1]}
+
         IS_score['Sharpe Decay'] = int(abs(OS_score['Ann. Sharpe'] - IS_score['Ann. Sharpe']))
         hypertune_metrics[tuple([param[0]] + list(param[1]))] = IS_score
         print(strategy,str(tuple([param[0]] + list(param[1]))),IS_score['Ann. Sharpe'])
@@ -197,21 +195,6 @@ if __name__=='__main__':
     metrics = metrics.drop_duplicates('Sharpe')#.sort_values('Fitnessvalue',ascending = False)
     metrics = metrics[metrics['Sharpe'] != metrics['Fitnessvalue']]
     metrics['Reverse'] = 0
-    # metrics['Reverse'][metrics['Sharpe']<0] = -1
-    # metrics['turnover'] = metrics['turnover'].round(1)
-    # metrics['Sharpe_Decay'] = (metrics['Outsample Sharpe']- metrics['Insample Sharpe']).abs().round(1)#(metrics['Outsample Sharpe']/metrics['Insample Sharpe'] - 1).abs().round(1)
-
-    # # metrics = metrics[metrics['Outsample Sharpe'].abs().round(1)> metrics['Insample Sharpe'].abs().round(1)*0.75]
-    # # metrics = metrics[metrics['Sharpe'].abs().round() >= 2]
-    # metrics[['Fitnessvalue']] = metrics[['Fitnessvalue']].abs().round(2)
-    # metrics[['Sharpe']] = metrics[['Sharpe']].abs().round(2)
-    # metrics[['Insample Sharpe','Outsample Sharpe']] = metrics[['Insample Sharpe','Outsample Sharpe']].round(2)
-    # metrics[['IS_Rank_IC','IS_Rank_IR','OS_Rank_IC','OS_Rank_IR']] = metrics[['IS_Rank_IC','IS_Rank_IR','OS_Rank_IC','OS_Rank_IR']].round(3)
-    # metrics['Sharpe_Decay'] = (metrics['Outsample Sharpe']- metrics['Insample Sharpe']).abs().round(1)
-
-
-    # metrics = metrics.sort_values(['Sharpe_Decay','Sharpe','turnover'],ascending = [True,False,True])
-
 
     ret = df_data['Close'].sort_index().resample(FREQ).last().bfill().pct_change().fillna(0)
 
@@ -306,13 +289,8 @@ if __name__=='__main__':
             FNAME = f'{PATH}/{strategy_ix}/hypertune_First_{strategy_ix}.csv'
             second_result = pd.read_csv(FNAME)
         
-            # second_result = second_result[(second_result['FitnessValue']>0) & (second_result['FitnessValue']<second_result.FitnessValue.drop_duplicates().quantile(0.99))].sort_values('FitnessValue')#.drop_duplicates('Sharpe')
-            # second_result = second_result[(second_result['FitnessValue']<second_result.FitnessValue.drop_duplicates().quantile(0.99))]#.sort_values('FitnessValue')#.drop_duplicates('Sharpe')
-            # second_result = second_result[(second_result['FitnessValue']>=second_result['FitnessValue'].drop_duplicates().quantile(0.75))]
-            # second_result = second_result.sort_values('FitnessValue',ascending = False)
 
             second_result['FitnessValue'] = second_result['FitnessValue'].round(1)
-            # second_result = second_result.sort_values(['Sharpe Decay','FitnessValue'],ascending = [True,False])#.drop_duplicates('Sharpe')
             second_result = second_result.sort_values(['FitnessValue','Sharpe Decay'],ascending = [reverse,True])
             second_result = second_result.iloc[:int(second_result.shape[1] * 0.75)]
 
@@ -353,7 +331,7 @@ if __name__=='__main__':
             plt.close()     
 
             #classify stress
-            subsets = ['all','token','coin']#,'Ethereum','bnb-chain','defi','nft','gaming'
+            subsets = ['all','token','coin']
             categories_result = {}
             for subset in subsets:
                 categories_result[subset] = backtest(name,selected.iloc[:1].values,category=subset).sum(axis = 1)
